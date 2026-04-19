@@ -209,5 +209,5 @@ __marimo__/
 
 #Project detailed ignoring
 scraper/jsonload.ipynb
-scraper/otomoto_results.json
 scraper/otomoto_results.jsonl
+.idea/workspace.xml
