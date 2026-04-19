@@ -1,7 +1,0 @@
-START_PAGE = 1
-END_PAGE = 4
-
-OUTPUT_FILE = 'otomoto_results.jsonl'
-
-SLEEP_LIST = 2
-SLEEP_DETAILS = 1

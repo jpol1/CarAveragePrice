@@ -6,22 +6,36 @@ import json
 import time
 from tqdm import tqdm
 
-import config
+with open("config.json", "r", encoding="utf-8") as file:
+    config_data = json.load(file)
 
-START_PAGE = config.START_PAGE
-END_PAGE = config.END_PAGE
-OUTPUT_FILE = config.OUTPUT_FILE
+CURRENT_PAGE = config_data["CURRENT_PAGE"]
+END_PAGE = config_data["END_PAGE"]
+OUTPUT_FILE = config_data["OUTPUT_FILE"]
 
-SLEEP_LIST = config.SLEEP_LIST
-SLEEP_DETAILS = config.SLEEP_DETAILS
-
+SLEEP_LIST = config_data["SLEEP_LIST"]
+SLEEP_DETAILS = config_data["SLEEP_DETAILS"]
 
 driver = webdriver.Safari()
 wait = WebDriverWait(driver, 15)
 
+
+def update_config_current_page(page_number, config_file="config.json"):
+    with open(config_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    data["CURRENT_PAGE"] = page_number
+
+    with open("config.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+
+
 def save_to_jsonl(new_data, filename=OUTPUT_FILE):
     with open(filename, 'a', encoding='utf-8') as f:
         f.write(json.dumps(new_data, ensure_ascii=False) + '\n')
+
+
 
 def load_offerts_from_page(driver):
     time.sleep(SLEEP_LIST)
@@ -33,7 +47,9 @@ def load_offerts_from_page(driver):
         if href and href not in page_links:
             page_links.append(href)
 
-    return  page_links
+    return page_links
+
+
 
 def prepare_dict_data(advert, params):
     def get_val(key):
@@ -79,31 +95,50 @@ def take_details_from_current_page(driver, link):
 
     save_to_jsonl(car_details)
 
-try:
+def get_total_pages(driver):
+    try:
+        pagination_buttons = driver.find_elements(By.CSS_SELECTOR, 'button.ooa-13ptg7a')
 
-    for page in tqdm(range(START_PAGE, END_PAGE + 1), desc="Page progress"):
-        list_url = f"https://www.otomoto.pl/osobowe?page={page}"
-        driver.get(list_url)
+        if pagination_buttons:
+            last_page_val = pagination_buttons[-1].text
+            return int(last_page_val)
+    except Exception as e:
+        return None
 
-        if page == START_PAGE:
-            try:
-                accept_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
-                accept_button.click()
-                time.sleep(SLEEP_DETAILS)
-            except:
-                pass
 
-        page_links = load_offerts_from_page(driver)
+if __name__ == '__main__':
+    try:
+        base_url = f"https://www.otomoto.pl/osobowe?page={CURRENT_PAGE}"
+        driver.get(base_url)
+        try:
+            accept_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
+            accept_button.click()
+        except:
+            pass
 
-        for link in tqdm(page_links, desc=f"Downloading car data from page number: {page}", leave=False):
-            try:
-                take_details_from_current_page(driver,link)
-            except Exception as e:
-                continue
+        ACTUAL_END_PAGE = get_total_pages(driver)
 
-except Exception as main_e:
-    print(f"CRITICAL ERROR: {main_e}")
+        if ACTUAL_END_PAGE:
+            print(f"ACTUAL_END_PAGE: {ACTUAL_END_PAGE}")
+            END_PAGE = ACTUAL_END_PAGE
 
-finally:
-    if driver:
-        driver.quit()
+        for page in tqdm(range(CURRENT_PAGE, END_PAGE + 1), desc="Page progress"):
+            list_url = f"https://www.otomoto.pl/osobowe?page={page}"
+            driver.get(list_url)
+
+            page_links = load_offerts_from_page(driver)
+
+            update_config_current_page(page+1)
+
+            for link in tqdm(page_links, desc=f"Downloading car data from page number: {page}", leave=False):
+                try:
+                    take_details_from_current_page(driver,link)
+                except Exception as e:
+                    continue
+
+    except Exception as main_e:
+        print(f"CRITICAL ERROR: {main_e}")
+
+    finally:
+        if driver:
+            driver.quit()
