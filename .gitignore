@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+#Project detailed ignoring
+scraper/jsonload.ipynb
+scraper/otomoto_results.json
