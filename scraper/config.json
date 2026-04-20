@@ -2,6 +2,5 @@
     "CURRENT_PAGE": 1,
     "END_PAGE": 1000,
     "OUTPUT_FILE": "otomoto_results.jsonl",
-    "SLEEP_LIST": 2,
-    "SLEEP_DETAILS": 1
+    "BASE_URL": "https://www.otomoto.pl/osobowe?page="
 }

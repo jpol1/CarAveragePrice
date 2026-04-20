@@ -211,3 +211,4 @@ __marimo__/
 scraper/jsonload.ipynb
 scraper/otomoto_results.jsonl
 .idea/workspace.xml
+scraper/logs.txt
